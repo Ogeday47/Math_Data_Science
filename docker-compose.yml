@@ -1,0 +1,57 @@
+version: '3.7'
+
+services:
+  # Service MariaDB
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: example # Mot de passe du root
+      MYSQL_DATABASE: wordpress    # Nom de la base de données WordPress
+      MYSQL_USER: user             # Utilisateur
+      MYSQL_PASSWORD: password     # Mot de passe de l'utilisateur
+    volumes:
+      - mariadb-data:/var/lib/mysql # Volume pour persistance des données
+    networks:
+      - wordpress-network
+
+  # Service PhpMyAdmin
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin
+    environment:
+      PMA_HOST: mariadb           # Adresse de la base de données
+      PMA_USER: user              # Nom d'utilisateur pour phpMyAdmin
+      PMA_PASSWORD: password      # Mot de passe pour l'utilisateur
+    ports:
+      - "8080:80"                 # Accéder à PhpMyAdmin via http://localhost:8080
+    networks:
+      - wordpress-network
+
+  # Service WordPress
+  wordpress:
+    image: wordpress:latest
+    container_name: wordpress
+    environment:
+      WORDPRESS_DB_HOST: mariadb:3306 # Adresse de la base de données MariaDB
+      WORDPRESS_DB_NAME: wordpress    # Nom de la base de données WordPress
+      WORDPRESS_DB_USER: user         # Nom d'utilisateur pour WordPress
+      WORDPRESS_DB_PASSWORD: password # Mot de passe pour la base de données
+    ports:
+      - "8000:80"                   # Accéder à WordPress via http://localhost:8000
+    volumes:
+      - wordpress-data:/var/www/html # Volume pour persistance des données
+    depends_on:
+      - mariadb                     # Attendre que MariaDB soit prêt
+    networks:
+      - wordpress-network
+
+# Volumes pour la persistance des données
+volumes:
+  mariadb-data:
+  wordpress-data:
+
+# Réseaux pour permettre la communication entre les services
+networks:
+  wordpress-network:
+    driver: bridge
